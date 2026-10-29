@@ -1,0 +1,7 @@
+# Copy of edgebar.xyz, kept locally only (not ours to publish)
+website/
+
+# Built program
+app/EdgeBar
+
+.DS_Store
