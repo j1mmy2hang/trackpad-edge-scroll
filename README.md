@@ -1,11 +1,16 @@
 # trackpad-edge-scroll
 
+> **Credit:** this is an open-source imitation of **[EdgeBar](https://edgebar.xyz/)**, the original app.
+> The idea, the gesture and the design all come from EdgeBar. I rebuilt it from scratch to learn how it works.
+> If you want the real, polished product, get it at **[edgebar.xyz](https://edgebar.xyz/)**.
+> This project is not affiliated with or endorsed by EdgeBar.
+
 A small macOS menu bar app that turns the edges of a MacBook trackpad into sliders.
 
 - **Left edge:** slide one finger up or down to change the screen brightness.
 - **Right edge:** slide one finger up or down to change the volume.
 
-The whole app is one Swift file, about 450 lines, with no Xcode project and no dependencies.
+The whole app is one Swift file, about 480 lines, with no Xcode project and no dependencies.
 
 ## Features
 
@@ -18,6 +23,7 @@ The whole app is one Swift file, about 450 lines, with no Xcode project and no d
 - **Never in the way:** only single-finger slides count, so two-finger scrolling and other gestures are unaffected.
 - **Sliding up unmutes** the sound.
 - **Menu bar only:** no Dock icon.
+- **Open at Login** from the menu bar icon.
 
 ## Requirements
 
@@ -25,21 +31,25 @@ The whole app is one Swift file, about 450 lines, with no Xcode project and no d
 - macOS 26 Tahoe or later, for Liquid Glass.
 - The Xcode Command Line Tools, for `swiftc`. Install them with `xcode-select --install`.
 
-## Build and run
+## Install
 
 ```sh
-cd app
-swiftc -O EdgeBar.swift -o EdgeBar
-./EdgeBar
+git clone https://github.com/j1mmy2hang/trackpad-edge-scroll.git
+cd trackpad-edge-scroll
+./build.sh install
 ```
 
-The icon (three vertical sliders) appears in the menu bar. To quit, choose **Quit EdgeBar** from its menu.
+This builds `build/EdgeBar.app`, copies it to `/Applications` and opens it. The icon (three vertical sliders) appears in the menu bar. To start it automatically, choose **Open at Login** from its menu. To quit, choose **Quit EdgeBar**.
+
+`./build.sh` alone only builds the app, without installing it.
 
 No permissions are needed: reading the trackpad, setting brightness and volume, and the haptic motor all work without Accessibility access.
 
+To uninstall, quit it and delete `/Applications/EdgeBar.app`.
+
 ## Settings
 
-The app's menu has **Haptic Feedback ▸ Off / Weak / Medium / Strong**. Everything else is a constant at the top of `app/EdgeBar.swift`. Rebuild after changing one.
+The app's menu has **Haptic Feedback ▸ Off / Weak / Medium / Strong** and **Open at Login**. Everything else is a constant at the top of `Sources/EdgeBar.swift`. Run `./build.sh install` again after changing one.
 
 | Setting | Default | Meaning |
 |---|---|---|
@@ -51,7 +61,8 @@ The app's menu has **Haptic Feedback ▸ Off / Weak / Medium / Strong**. Everyth
 To tune `palmSize` or the other values, run with debug output. Each touch is printed with its position and size:
 
 ```sh
-EDGEBAR_DEBUG=1 ./EdgeBar
+./build.sh
+EDGEBAR_DEBUG=1 build/EdgeBar.app/Contents/MacOS/EdgeBar
 ```
 
 ## How it works
@@ -79,18 +90,20 @@ Each single-finger touch goes through these phases:
 - **Private frameworks.** MultitouchSupport and DisplayServices are not public API. A future macOS update could change or break them, and an app that uses them can't go on the Mac App Store.
 - **The pointer can shake slightly while sliding.** macOS moves the pointer before any app sees the movement, so EdgeBar can only move it back afterwards.
 - **The keyboard goes to the display while it's visible** (during a slide and about one second after). It hands the keyboard back as soon as it fades out.
-- **Not a packaged `.app`.** It runs as a plain program from the terminal and doesn't start at login.
+- **Ad-hoc signed, not notarized.** Built on your own Mac, it runs fine. A copy downloaded from someone else would be blocked by Gatekeeper.
 - **`palmSize` is an estimate.** It may need tuning for your hands; see [Settings](#settings).
 - **A touch that starts on an edge won't move the pointer once it becomes a slide.** Start pointer movements away from the edges, or narrow `edgeWidth`.
 
 ## Project structure
 
 ```
-app/EdgeBar.swift   the whole app
-README.md
-LICENSE
+Sources/EdgeBar.swift    the whole app
+Resources/Info.plist     app bundle settings (menu bar only, bundle ID)
+Resources/AppIcon.icns   app icon
+Tools/make-icon.swift    draws the icon: swift Tools/make-icon.swift && iconutil -c icns build/AppIcon.iconset -o Resources/AppIcon.icns
+build.sh                 builds build/EdgeBar.app; "install" copies it to /Applications
 ```
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT, for this code only. See [LICENSE](LICENSE). The name EdgeBar and the original design belong to [edgebar.xyz](https://edgebar.xyz/).

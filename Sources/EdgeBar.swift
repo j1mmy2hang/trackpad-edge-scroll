@@ -2,10 +2,13 @@
 // along the right edge for volume. While sliding, the cursor stays put and an
 // on-screen display shows the level, and the trackpad ticks at each step. A menu bar icon with Quit.
 //
-// Build: swiftc -O EdgeBar.swift -o EdgeBar
-// Run:   ./EdgeBar                   (EDGEBAR_DEBUG=1 ./EdgeBar prints every touch)
+// An open-source imitation of EdgeBar (https://edgebar.xyz/), the original app.
+//
+// Build the app: ./build.sh            (./build.sh install copies it to /Applications)
+// Quick test:    swiftc -O Sources/EdgeBar.swift -o build/EdgeBar && EDGEBAR_DEBUG=1 build/EdgeBar
 
 import Cocoa
+import ServiceManagement
 import CoreAudio
 import AudioToolbox
 
@@ -440,6 +443,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         hapticsItem.submenu = haptics
         menu.addItem(hapticsItem)
 
+        // Open at Login (only works when running as EdgeBar.app)
+        let login = NSMenuItem(title: "Open at Login", action: #selector(toggleLogin(_:)), keyEquivalent: "")
+        login.target = self
+        login.state = SMAppService.mainApp.status == .enabled ? .on : .off
+        menu.addItem(login)
+
         menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: "Quit EdgeBar", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         statusItem.menu = menu
@@ -453,6 +462,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         UserDefaults.standard.set(sender.tag, forKey: "hapticID")
         for item in sender.menu?.items ?? [] { item.state = item == sender ? .on : .off }
         tick()      // a sample of the new strength
+    }
+
+    @objc func toggleLogin(_ sender: NSMenuItem) {
+        let service = SMAppService.mainApp
+        do {
+            if service.status == .enabled { try service.unregister() } else { try service.register() }
+        } catch {
+            NSLog("EdgeBar: Open at Login failed: \(error)")
+        }
+        sender.state = service.status == .enabled ? .on : .off
     }
 }
 

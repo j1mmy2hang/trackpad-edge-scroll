@@ -1,7 +1,7 @@
 # Copy of edgebar.xyz, kept locally only (not ours to publish)
 website/
 
-# Built program
-app/EdgeBar
+# Build output
+build/
 
 .DS_Store
